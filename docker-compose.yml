@@ -1,0 +1,22 @@
+nginx:
+  build: .
+  links:
+    - app
+  environment:
+    - ENABLE_SSL=true
+    - TARGET_SERVICE="app"
+    - SSL_CERTIFICATE=/etc/letsencrypt/live/apitest2.dito.com.br/fullchain.pem
+  ports:
+    - "80:80"
+    - "443:443"
+  volumes:
+    - ./dhparam.pem:/etc/secrets/dhparam
+    - /tmp:/public
+certbot-server:
+  build: certbot/.
+  ports:
+    - "5000:5000"
+app:
+  image: nginx
+  ports:
+    - "80"

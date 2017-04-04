@@ -12,16 +12,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 
-# Env says we're using SSL 
+# Env says we're using SSL
 if [ -n "${ENABLE_SSL+1}" ] && [ "${ENABLE_SSL,,}" = "true" ]; then
   echo "Enabling SSL..."
   cp /usr/src/proxy_ssl.conf /etc/nginx/conf.d/proxy.conf
+
+  # Set vars
+  SSL_CERTIFICATE="${SSL_CERTIFICATE:-/etc/secrets/proxycert}"
+  SSL_CERTIFICATE_KEY="${SSL_CERTIFICATE_KEY:-/etc/secrets/proxykey}"
+  SSL_DHPARAM="${SSL_DHPARAM:-/etc/secrets/dhparam}"
+
+  echo Replacing SSL_CERTIFICATE: $SSL_CERTIFICATE
+  echo Replacing SSL_CERTIFICATE_KEY: $SSL_CERTIFICATE_KEY
+  echo Replacing SSL_DHPARAM: $SSL_DHPARAM
+
+  sed -i "s,{{SSL_CERTIFICATE}},${SSL_CERTIFICATE},g;" /etc/nginx/conf.d/proxy.conf
+  sed -i "s,{{SSL_CERTIFICATE_KEY}},${SSL_CERTIFICATE_KEY},g;" /etc/nginx/conf.d/proxy.conf
+  sed -i "s,{{SSL_DHPARAM}},${SSL_DHPARAM},g;" /etc/nginx/conf.d/proxy.conf
+
 else
   # No SSL
   cp /usr/src/proxy_nossl.conf /etc/nginx/conf.d/proxy.conf
 fi
 
-# If an htpasswd file is provided, download and configure nginx 
+SERVER_NAME="${SERVER_NAME:-_}"
+sed -i "s/{{SERVER_NAME}}/${SERVER_NAME}/g;" /etc/nginx/conf.d/proxy.conf
+
+# If an htpasswd file is provided, download and configure nginx
 if [ -n "${ENABLE_BASIC_AUTH+1}" ] && [ "${ENABLE_BASIC_AUTH,,}" = "true" ]; then
   echo "Enabling basic auth..."
   sed -i "s/#auth_basic/auth_basic/g;" /etc/nginx/conf.d/proxy.conf
